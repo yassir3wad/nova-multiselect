@@ -19,6 +19,7 @@ class MultiSelectField extends Field
     private $translatable = false;
     private $taggable = false;
     protected $relation;
+    private $forAction = false;
 
     public function relation($relation)
     {
@@ -26,6 +27,12 @@ class MultiSelectField extends Field
         return $this;
     }
 
+    public function setForAction($forAction = true)
+    {
+        $this->forAction = $forAction;
+        return $this;
+    }
+    
     public function options($options)
     {
         return $this->withMeta([
@@ -41,6 +48,8 @@ class MultiSelectField extends Field
     public function resolve($resource, $attribute = null)
     {
         parent::resolve($resource, $attribute);
+        
+        if ($this->forAction) return;
 
         if ($this->relation) {
             $this->value = $resource->{$this->attribute}->pluck("id")->toArray();
