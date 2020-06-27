@@ -12,6 +12,7 @@
                 openDirection="top"
                 :loading="loading"
                 :taggable="tagging" @tag="addTag"
+                group-values="options" group-label="group" :group-select="group"
             ></multiselect>
         </template>
     </default-field>
@@ -31,6 +32,7 @@
             return {
                 options: [],
                 loading: true,
+	            group: false,
                 parentValue: null
             }
         },
@@ -42,6 +44,7 @@
             setInitialValue() {
                 if (this.field.options) {
                     this.options = this.field.options;
+                    this.group = this.field.group ? this.field.group : false;
                 }
 
                 this.setValue();
