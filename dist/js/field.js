@@ -872,133 +872,139 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
-    mixins: [__WEBPACK_IMPORTED_MODULE_0_laravel_nova__["FormField"], __WEBPACK_IMPORTED_MODULE_0_laravel_nova__["HandlesValidationErrors"]],
+	mixins: [__WEBPACK_IMPORTED_MODULE_0_laravel_nova__["FormField"], __WEBPACK_IMPORTED_MODULE_0_laravel_nova__["HandlesValidationErrors"]],
 
-    components: { Multiselect: __WEBPACK_IMPORTED_MODULE_1_vue_multiselect___default.a },
+	components: { Multiselect: __WEBPACK_IMPORTED_MODULE_1_vue_multiselect___default.a },
 
-    props: ['resourceName', 'resourceId', 'field'],
-    data: function data() {
-        return {
-            options: [],
-            loading: true,
-            group: false,
-            parentValue: null
-        };
-    },
-
-
-    methods: {
-        /*
-         * Set the initial, internal value for the field.
-         */
-        setInitialValue: function setInitialValue() {
-            if (this.field.options) {
-                this.options = this.field.options;
-                this.group = this.field.group ? this.field.group : false;
-            }
-
-            this.setValue();
-        },
-        setValue: function setValue() {
-            var value = this.field.value || [];
-            this.value = this.options.filter(function (item) {
-                return value.find(function (item2) {
-                    return item.value === item2;
-                });
-            });
-            this.loading = false;
-        },
+	props: ['resourceName', 'resourceId', 'field'],
+	data: function data() {
+		return {
+			options: [],
+			loading: true,
+			group: false,
+			groupValues: '',
+			groupLabel: '',
+			parentValue: null
+		};
+	},
 
 
-        /**
-         * Fill the given FormData object with the field's internal value.
-         */
-        fill: function fill(formData) {
-            var _this = this;
+	methods: {
+		/*
+            * Set the initial, internal value for the field.
+            */
+		setInitialValue: function setInitialValue() {
+			if (this.field.options) {
+				this.options = this.field.options;
+				if (this.field.group) {
+					this.group = true;
+					this.groupValues = 'options';
+					this.groupLabel = 'group';
+				}
+			}
 
-            this.value.forEach(function (item) {
-                formData.append(_this.field.attribute + '[]', item['value']);
-            });
-        },
-
-
-        /**
-         * Update the field's internal value.
-         */
-        handleChange: function handleChange(value) {
-            this.value = value;
-        },
-        updateOptions: function updateOptions() {
-            var _this2 = this;
-
-            this.options = [];
-            this.loading = true;
-
-            if (this.notWatching() || this.parentValue != null && this.parentValue != '') {
-                Nova.request().get(this.endpoint).then(function (response) {
-                    _this2.options = response.data;
-                    _this2.setValue();
-                });
-            }
-        },
-        notWatching: function notWatching() {
-            return this.field.parent_attribute == undefined;
-        },
-        isWatchingComponent: function isWatchingComponent(component) {
-            return component.field !== undefined && component.field.attribute == this.field.parent_attribute;
-        },
-        addTag: function addTag(newTag) {
-            var tag = {
-                label: newTag,
-                value: newTag
-            };
-            this.options.push(tag);
-            this.value.push(tag);
-        }
-    },
-
-    mounted: function mounted() {
-        var _this3 = this;
-
-        this.watchedComponents.forEach(function (component) {
-
-            var attribute = 'value';
-
-            if (component.field.component === 'belongs-to-field') {
-                attribute = 'selectedResource';
-            }
-
-            component.$watch(attribute, function (value) {
-
-                _this3.parentValue = value && attribute == 'selectedResource' ? value.value : value;
-
-                _this3.updateOptions();
-            }, { immediate: true });
-        });
-    },
+			this.setValue();
+		},
+		setValue: function setValue() {
+			var value = this.field.value || [];
+			this.value = this.options.filter(function (item) {
+				return value.find(function (item2) {
+					return item.value === item2;
+				});
+			});
+			this.loading = false;
+		},
 
 
-    computed: {
-        watchedComponents: function watchedComponents() {
-            var _this4 = this;
+		/**
+   * Fill the given FormData object with the field's internal value.
+   */
+		fill: function fill(formData) {
+			var _this = this;
 
-            return this.$parent.$children.filter(function (component) {
-                return _this4.isWatchingComponent(component);
-            });
-        },
-        tagging: function tagging() {
-            return this.field.tagging;
-        },
-        endpoint: function endpoint() {
-            return this.field.endpoint.replace('{resource-name}', this.resourceName).replace('{resource-id}', this.resourceId ? this.resourceId : '').replace('{' + this.field.parent_attribute + '}', this.parentValue ? this.parentValue : '');
-        },
-        empty: function empty() {
-            return !this.loading && this.options.length == 0;
-        },
-        disabled: function disabled() {
-            return this.loading == false && this.field.parent_attribute != undefined && this.parentValue == null || this.options.length == 0;
-        }
-    }
+			this.value.forEach(function (item) {
+				formData.append(_this.field.attribute + '[]', item['value']);
+			});
+		},
+
+
+		/**
+   * Update the field's internal value.
+   */
+		handleChange: function handleChange(value) {
+			this.value = value;
+		},
+		updateOptions: function updateOptions() {
+			var _this2 = this;
+
+			this.options = [];
+			this.loading = true;
+
+			if (this.notWatching() || this.parentValue != null && this.parentValue != '') {
+				Nova.request().get(this.endpoint).then(function (response) {
+					_this2.options = response.data;
+					_this2.setValue();
+				});
+			}
+		},
+		notWatching: function notWatching() {
+			return this.field.parent_attribute == undefined;
+		},
+		isWatchingComponent: function isWatchingComponent(component) {
+			return component.field !== undefined && component.field.attribute == this.field.parent_attribute;
+		},
+		addTag: function addTag(newTag) {
+			var tag = {
+				label: newTag,
+				value: newTag
+			};
+			this.options.push(tag);
+			this.value.push(tag);
+		}
+	},
+
+	mounted: function mounted() {
+		var _this3 = this;
+
+		this.watchedComponents.forEach(function (component) {
+
+			var attribute = 'value';
+
+			if (component.field.component === 'belongs-to-field') {
+				attribute = 'selectedResource';
+			}
+
+			component.$watch(attribute, function (value) {
+
+				_this3.parentValue = value && attribute == 'selectedResource' ? value.value : value;
+
+				_this3.updateOptions();
+			}, { immediate: true });
+		});
+	},
+
+
+	computed: {
+		watchedComponents: function watchedComponents() {
+			var _this4 = this;
+
+			return this.$parent.$children.filter(function (component) {
+				return _this4.isWatchingComponent(component);
+			});
+		},
+		tagging: function tagging() {
+			return this.field.tagging;
+		},
+		endpoint: function endpoint() {
+			return this.field.endpoint.replace('{resource-name}', this.resourceName).replace('{resource-id}', this.resourceId ? this.resourceId : '').replace('{' + this.field.parent_attribute + '}', this.parentValue ? this.parentValue : '');
+		},
+		empty: function empty() {
+			return !this.loading && this.options.length == 0;
+		},
+		disabled: function disabled() {
+			return this.loading == false && this.field.parent_attribute != undefined && this.parentValue == null || this.options.length == 0;
+		}
+	}
 });
 
 /***/ }),
@@ -28440,8 +28446,8 @@ var render = function() {
               openDirection: "top",
               loading: _vm.loading,
               taggable: _vm.tagging,
-              "group-values": "options",
-              "group-label": "group",
+              "group-values": _vm.groupValues,
+              "group-label": _vm.groupLabel,
               "group-select": _vm.group
             },
             on: { tag: _vm.addTag },

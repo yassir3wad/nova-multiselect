@@ -2,153 +2,159 @@
     <default-field :field="field" :errors="errors">
         <template slot="field">
             <multiselect
-                :id="field.name"
-                :class="errorClasses"
-                v-model="value"
-                :options="options"
-                :multiple="true"
-                track-by="value"
-                label="label"
-                openDirection="top"
-                :loading="loading"
-                :taggable="tagging" @tag="addTag"
-                group-values="options" group-label="group" :group-select="group"
+                    :id="field.name"
+                    :class="errorClasses"
+                    v-model="value"
+                    :options="options"
+                    :multiple="true"
+                    track-by="value"
+                    label="label"
+                    openDirection="top"
+                    :loading="loading"
+                    :taggable="tagging" @tag="addTag"
+                    :group-values="groupValues" :group-label="groupLabel" :group-select="group"
             ></multiselect>
         </template>
     </default-field>
 </template>
 
 <script>
-    import {FormField, HandlesValidationErrors} from 'laravel-nova'
-    import Multiselect from 'vue-multiselect'
+	import {FormField, HandlesValidationErrors} from 'laravel-nova'
+	import Multiselect from 'vue-multiselect'
 
-    export default {
-        mixins: [FormField, HandlesValidationErrors],
+	export default {
+		mixins: [FormField, HandlesValidationErrors],
 
-        components: {Multiselect},
+		components: {Multiselect},
 
-        props: ['resourceName', 'resourceId', 'field'],
-        data() {
-            return {
-                options: [],
-                loading: true,
-	            group: false,
-                parentValue: null
-            }
-        },
+		props: ['resourceName', 'resourceId', 'field'],
+		data() {
+			return {
+				options: [],
+				loading: true,
+				group: false,
+				groupValues: '',
+				groupLabel: '',
+				parentValue: null
+			}
+		},
 
-        methods: {
-            /*
+		methods: {
+			/*
              * Set the initial, internal value for the field.
              */
-            setInitialValue() {
-                if (this.field.options) {
-                    this.options = this.field.options;
-                    this.group = this.field.group ? this.field.group : false;
-                }
+			setInitialValue() {
+				if (this.field.options) {
+					this.options = this.field.options;
+					if (this.field.group) {
+						this.group = true;
+						this.groupValues = 'options';
+						this.groupLabel = 'group';
+					}
+				}
 
-                this.setValue();
-            },
+				this.setValue();
+			},
 
-            setValue() {
-                const value = this.field.value || [];
-                this.value = this.options.filter(item => {
-                    return value.find(item2 => {
-                        return item.value === item2;
-                    });
-                });
-                this.loading = false;
-            },
+			setValue() {
+				const value = this.field.value || [];
+				this.value = this.options.filter(item => {
+					return value.find(item2 => {
+						return item.value === item2;
+					});
+				});
+				this.loading = false;
+			},
 
-            /**
-             * Fill the given FormData object with the field's internal value.
-             */
-            fill(formData) {
-                this.value.forEach(item => {
-                    formData.append(this.field.attribute + '[]', item['value']);
-                });
-            },
+			/**
+			 * Fill the given FormData object with the field's internal value.
+			 */
+			fill(formData) {
+				this.value.forEach(item => {
+					formData.append(this.field.attribute + '[]', item['value']);
+				});
+			},
 
-            /**
-             * Update the field's internal value.
-             */
-            handleChange(value) {
-                this.value = value
-            },
+			/**
+			 * Update the field's internal value.
+			 */
+			handleChange(value) {
+				this.value = value
+			},
 
-            updateOptions() {
-                this.options = [];
-                this.loading = true;
+			updateOptions() {
+				this.options = [];
+				this.loading = true;
 
-                if (this.notWatching() || (this.parentValue != null && this.parentValue != '')) {
-                    Nova.request().get(this.endpoint)
-                        .then(response => {
-                            this.options = response.data;
-                            this.setValue();
-                        })
-                }
-            },
+				if (this.notWatching() || (this.parentValue != null && this.parentValue != '')) {
+					Nova.request().get(this.endpoint)
+						.then(response => {
+							this.options = response.data;
+							this.setValue();
+						})
+				}
+			},
 
-            notWatching() {
-                return this.field.parent_attribute == undefined;
-            },
+			notWatching() {
+				return this.field.parent_attribute == undefined;
+			},
 
-            isWatchingComponent(component) {
-                return component.field !== undefined
-                    && component.field.attribute == this.field.parent_attribute;
-            },
+			isWatchingComponent(component) {
+				return component.field !== undefined
+					&& component.field.attribute == this.field.parent_attribute;
+			},
 
-            addTag(newTag) {
-                const tag = {
-                    label: newTag,
-                    value: newTag
-                };
-                this.options.push(tag);
-                this.value.push(tag);
-            }
-        },
+			addTag(newTag) {
+				const tag = {
+					label: newTag,
+					value: newTag
+				};
+				this.options.push(tag);
+				this.value.push(tag);
+			}
+		},
 
-        mounted() {
-            this.watchedComponents.forEach(component => {
+		mounted() {
+			this.watchedComponents.forEach(component => {
 
-                let attribute = 'value';
+				let attribute = 'value';
 
-                if (component.field.component === 'belongs-to-field') {
-                    attribute = 'selectedResource';
-                }
+				if (component.field.component === 'belongs-to-field') {
+					attribute = 'selectedResource';
+				}
 
-                component.$watch(attribute, (value) => {
+				component.$watch(attribute, (value) => {
 
-                    this.parentValue = (value && attribute == 'selectedResource') ? value.value : value;
+					this.parentValue = (value && attribute == 'selectedResource') ? value.value : value;
 
-                    this.updateOptions();
-                }, {immediate: true});
-            });
-        },
+					this.updateOptions();
+				}, {immediate: true});
+			});
+		},
 
-        computed: {
-            watchedComponents() {
-                return this.$parent.$children.filter(component => {
-                    return this.isWatchingComponent(component);
-                })
-            },
-            tagging() {
-                return this.field.tagging;
-            },
-            endpoint() {
-                return this.field.endpoint
-                    .replace('{resource-name}', this.resourceName)
-                    .replace('{resource-id}', this.resourceId ? this.resourceId : '')
-                    .replace('{' + this.field.parent_attribute + '}', this.parentValue ? this.parentValue : '')
-            },
-            empty() {
-                return !this.loading && this.options.length == 0;
-            },
+		computed: {
+			watchedComponents() {
+				return this.$parent.$children.filter(component => {
+					return this.isWatchingComponent(component);
+				})
+			},
+			tagging() {
+				return this.field.tagging;
+			},
+			endpoint() {
+				return this.field.endpoint
+					.replace('{resource-name}', this.resourceName)
+					.replace('{resource-id}', this.resourceId ? this.resourceId : '')
+					.replace('{' + this.field.parent_attribute + '}', this.parentValue ? this.parentValue : '')
+			},
+			empty() {
+				return !this.loading && this.options.length == 0;
+			},
 
-            disabled() {
-                return this.loading == false && (this.field.parent_attribute != undefined && this.parentValue == null) || this.options.length == 0;
-            }
-        },
-    }
+			disabled() {
+				return this.loading == false && (this.field.parent_attribute != undefined && this.parentValue == null) || this.options.length == 0;
+			}
+		},
+	}
 </script>
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
