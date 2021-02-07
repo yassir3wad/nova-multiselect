@@ -9,7 +9,7 @@
                     :multiple="true"
                     track-by="value"
                     label="label"
-                    openDirection="top"
+                    openDirection="bottom"
                     :loading="loading"
                     :taggable="tagging" @tag="addTag"
                     :group-values="groupValues" :group-label="groupLabel" :group-select="group"
